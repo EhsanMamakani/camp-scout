@@ -232,7 +232,13 @@ function renderLegend(mapObj) {
     .sort((a, b) => a.icon.label.localeCompare(b.icon.label))
     .map(({ l, icon }) => `<div class="row">${legendTileHtml(l, icon, 18)}${esc(icon.label)}</div>`)
     .join('');
-  if (!hasSites && !iconRows) { el.hidden = true; return; }
+  const toggle = $('#legend-toggle');
+  if (!hasSites && !iconRows) {
+    el.hidden = true;
+    toggle.hidden = true;
+    return;
+  }
+  toggle.hidden = false;
 
   const availRows = AVAIL_LABELS.map((a) =>
     `<div class="row"><span class="dot ${a.cls}"></span><span>${a.label}<small>${a.sub}</small></span></div>`).join('');
@@ -368,8 +374,8 @@ async function drawSites(mapObj, parkId, focusResourceId, seq) {
       zIndexOffset: cls === 'avail-free' ? 200 : 0,
     }));
     marker.bindPopup(() => sitePopupHtml(mapObj, parkId, r, meta, nights?.get(r.resourceId)), {
-      maxWidth: 300,
-      maxHeight: 340,
+      maxWidth: Math.min(300, document.documentElement.clientWidth - 70),
+      maxHeight: Math.min(340, Math.round(window.innerHeight * 0.55)),
       keepInView: true,
     });
 

@@ -8,6 +8,14 @@ const $ = (sel) => document.querySelector(sel);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) =>
   ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
+// On phones the results live in a bottom sheet; jumping to the map should
+// collapse it so the map is actually visible.
+function revealMap() {
+  if (window.matchMedia('(max-width: 760px)').matches) {
+    document.body.classList.remove('sheet-open');
+  }
+}
+
 const MAX_CHIPS = 40;
 
 export function renderResults() {
@@ -72,6 +80,7 @@ function parkCard(p) {
   summary.querySelector('.goto-park').addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
+    revealMap();
     showPark(p.parkId);
   });
   card.appendChild(summary);
@@ -84,7 +93,10 @@ function parkCard(p) {
       <span class="cg-title">${esc(cg.title)}</span>
       <span class="cg-free">${cg.free} free</span>
       ${cg.partial ? `<span class="cg-partial">+${cg.partial} partial</span>` : ''}`;
-    row.querySelector('.cg-title').addEventListener('click', () => showPark(p.parkId, cg.mapId));
+    row.querySelector('.cg-title').addEventListener('click', () => {
+      revealMap();
+      showPark(p.parkId, cg.mapId);
+    });
     card.appendChild(row);
 
     const chips = document.createElement('div');
@@ -95,7 +107,10 @@ function parkCard(p) {
       chip.className = 'site-chip' + (s.fullStay ? '' : ' partial');
       chip.textContent = s.name;
       chip.title = s.fullStay ? 'free for your whole stay; view on map' : 'free some nights; view on map';
-      chip.addEventListener('click', () => showPark(p.parkId, cg.mapId, s.resourceId));
+      chip.addEventListener('click', () => {
+        revealMap();
+        showPark(p.parkId, cg.mapId, s.resourceId);
+      });
       chips.appendChild(chip);
     }
     if (cg.sites.length > MAX_CHIPS) {

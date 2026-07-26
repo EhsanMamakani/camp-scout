@@ -162,9 +162,25 @@ function finishScan(msg) {
   refreshCurrentView();
 }
 
+// ---------------------------------------------------------------- mobile sheet
+
+const mobileQuery = window.matchMedia('(max-width: 760px)');
+
+function initMobileSheet() {
+  $('#sheet-handle').addEventListener('click', () => {
+    document.body.classList.toggle('sheet-open');
+  });
+  $('#legend-toggle').addEventListener('click', () => {
+    $('#map-legend').classList.toggle('show');
+  });
+  // phones start with the sheet open so search is the first thing you see
+  if (mobileQuery.matches) document.body.classList.add('sheet-open');
+}
+
 // ---------------------------------------------------------------- boot
 
 async function boot() {
+  initMobileSheet();
   initMap();
 
   const [parks, rootMaps, attrs, equipment, iconLabels] = await Promise.all([

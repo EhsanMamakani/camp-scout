@@ -724,7 +724,107 @@ input:focus-visible, select:focus-visible, button:focus-visible {
 @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 @keyframes pop { from { opacity: 0; transform: scale(0.4); } to { opacity: 1; transform: scale(1); } }
 
-@media (max-width: 900px) {
-  body { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
-  #sidebar { max-height: 45vh; border-right: none; border-bottom: 4px solid var(--marigold); }
+/* mobile-only controls, hidden on desktop */
+#sheet-handle, #legend-toggle { display: none; }
+
+/* ------------------------------------------------ mobile: map + bottom sheet */
+
+@media (max-width: 760px) {
+  body { display: block; }
+
+  /* the map owns the whole screen */
+  #map-area {
+    position: fixed;
+    inset: 0;
+    height: 100vh;
+    height: 100dvh;
+  }
+
+  #crumbs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding: 8px 10px;
+  }
+  #crumbs::-webkit-scrollbar { display: none; }
+  .crumb { white-space: nowrap; font-size: 13px; padding: 4px 10px; flex: 0 0 auto; }
+
+  /* sidebar becomes a bottom sheet */
+  #sidebar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1100;
+    height: 85vh;
+    height: 85dvh;
+    border-right: none;
+    border-top: 4px solid var(--marigold);
+    border-radius: 18px 18px 0 0;
+    box-shadow: 0 -6px 24px rgba(15, 32, 24, 0.35);
+    transform: translateY(calc(100% - 104px)); /* collapsed: peek the handle + brand */
+    transition: transform 0.25s ease;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+  body.sheet-open #sidebar { transform: translateY(0); }
+
+  #sheet-handle {
+    display: block;
+    width: 100%;
+    padding: 10px 0 4px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    flex: 0 0 auto;
+  }
+  #sheet-handle .grip {
+    display: block;
+    width: 44px;
+    height: 5px;
+    margin: 0 auto;
+    border-radius: 3px;
+    background: rgba(245, 239, 224, 0.45);
+  }
+
+  .brand { padding: 4px 16px 12px; animation: none; }
+  .brand-mark { font-size: 26px; }
+  .brand h1 { font-size: 21px; }
+  .tagline { font-size: 10.5px; }
+  #search-form { animation: none; }
+
+  /* legend hides behind a chip so it never covers the map or popups */
+  #map-legend {
+    display: none;
+    left: 12px;
+    right: 12px;
+    bottom: 156px;
+    max-width: none;
+    max-height: 45vh;
+    max-height: 45dvh;
+    z-index: 1000;
+  }
+  #map-legend.show { display: block; }
+
+  #legend-toggle {
+    display: block;
+    position: absolute;
+    right: 12px;
+    bottom: 118px;
+    z-index: 1000;
+    border: 2px solid var(--pine-800);
+    border-radius: 999px;
+    background: rgba(245, 239, 224, 0.95);
+    color: var(--pine-800);
+    font-family: 'Fraunces', serif;
+    font-weight: 650;
+    font-size: 13px;
+    padding: 7px 14px;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+  }
+
+  /* popups: fit the phone, not a fixed 300px */
+  .leaflet-popup-content-wrapper { max-width: calc(100vw - 56px); }
+
+  .map-loading { top: 52px; }
 }
