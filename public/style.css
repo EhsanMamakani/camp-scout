@@ -419,6 +419,16 @@ input:focus-visible, select:focus-visible, button:focus-visible {
 .leaflet-popup-tip { background: var(--pine-800); }
 .leaflet-popup-content { margin: 12px 14px; }
 
+/* single, thin, themed scrollbar when the popup content overflows
+   (Leaflet adds .leaflet-popup-scrolled + default grey borders we don't want) */
+.leaflet-popup-scrolled {
+  border-top: none;
+  border-bottom: none;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--paper-edge) transparent;
+}
+
 .popup { max-width: 270px; font-size: 13px; }
 .popup h3 {
   font-family: 'Fraunces', serif;
@@ -536,7 +546,7 @@ input:focus-visible, select:focus-visible, button:focus-visible {
 .night-cell.ok { background: var(--op-available); }
 .night-cell.no { background: var(--op-unavailable); }
 
-.amenities { margin: 6px 0; padding: 0; list-style: none; max-height: 150px; overflow-y: auto; }
+.amenities { margin: 6px 0; padding: 0; list-style: none; }
 .amenities li {
   display: flex;
   justify-content: space-between;
