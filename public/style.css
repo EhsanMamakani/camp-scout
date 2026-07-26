@@ -768,6 +768,12 @@ input:focus-visible, select:focus-visible, button:focus-visible {
   }
   body.sheet-open #sidebar { transform: translateY(0); }
 
+  /* collapsed: the peek is a drag surface, not a scroll area */
+  #sidebar { overflow: hidden; touch-action: none; }
+  body.sheet-open #sidebar { overflow-y: auto; touch-action: auto; }
+  /* handle + brand stay draggable even while open */
+  #sheet-handle, #sidebar .brand { touch-action: none; }
+
   #sheet-handle {
     display: block;
     width: 100%;

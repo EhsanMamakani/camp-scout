@@ -165,9 +165,14 @@ function finishScan(msg) {
 // ---------------------------------------------------------------- mobile sheet
 
 const mobileQuery = window.matchMedia('(max-width: 760px)');
+const SHEET_PEEK = 104; // must match the collapsed translateY in style.css
 
 function initMobileSheet() {
+  const sheet = $('#sidebar');
+  let suppressClick = false;
+
   $('#sheet-handle').addEventListener('click', () => {
+    if (suppressClick) { suppressClick = false; return; }
     document.body.classList.toggle('sheet-open');
   });
   $('#legend-toggle').addEventListener('click', () => {
@@ -175,6 +180,53 @@ function initMobileSheet() {
   });
   // phones start with the sheet open so search is the first thing you see
   if (mobileQuery.matches) document.body.classList.add('sheet-open');
+
+  // Drag the sheet with a finger: from anywhere while collapsed, or from the
+  // handle/brand while open (the rest of the open sheet scrolls its content).
+  let drag = null;
+
+  sheet.addEventListener('pointerdown', (e) => {
+    if (!mobileQuery.matches) return;
+    suppressClick = false; // a stale flag (e.g. after pointercancel) must not eat this tap
+    const open = document.body.classList.contains('sheet-open');
+    if (open && !e.target.closest('#sheet-handle, .brand')) return;
+    const height = sheet.getBoundingClientRect().height;
+    drag = {
+      startY: e.clientY,
+      startT: performance.now(),
+      startOffset: open ? 0 : height - SHEET_PEEK,
+      height,
+      moved: false,
+    };
+    sheet.style.transition = 'none';
+    try { sheet.setPointerCapture(e.pointerId); } catch { /* synthetic events */ }
+  });
+
+  sheet.addEventListener('pointermove', (e) => {
+    if (!drag) return;
+    const dy = e.clientY - drag.startY;
+    if (Math.abs(dy) > 4) drag.moved = true;
+    const offset = Math.min(Math.max(drag.startOffset + dy, 0), drag.height - SHEET_PEEK);
+    sheet.style.transform = `translateY(${offset}px)`;
+  });
+
+  const endDrag = (e) => {
+    if (!drag) return;
+    const { startY, startT, startOffset, height, moved } = drag;
+    drag = null;
+    sheet.style.transition = '';
+    if (!moved) { sheet.style.transform = ''; return; } // plain tap: click handler decides
+    suppressClick = true;
+    const dy = e.clientY - startY;
+    const velocity = dy / Math.max(performance.now() - startT, 1); // px per ms
+    const shouldOpen = Math.abs(velocity) > 0.3
+      ? velocity < 0                                        // flick direction wins
+      : (startOffset + dy) < (height - SHEET_PEEK) / 2;     // else nearest state
+    document.body.classList.toggle('sheet-open', shouldOpen);
+    sheet.style.transform = ''; // hand back to the class-driven transform
+  };
+  sheet.addEventListener('pointerup', endDrag);
+  sheet.addEventListener('pointercancel', endDrag);
 }
 
 // ---------------------------------------------------------------- boot

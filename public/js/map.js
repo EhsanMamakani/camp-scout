@@ -394,10 +394,11 @@ async function drawSites(mapObj, parkId, focusResourceId, seq) {
     }
 
     if (focusResourceId === r.resourceId) {
-      setTimeout(() => {
-        map.setView(toLatLng(mapObj, r.x, r.y), 1.5);
-        marker.openPopup();
-      }, 150);
+      // Jump without animation: an animated setView can be cancelled by the
+      // popup's keepInView autopan mid-flight, randomly leaving the map at
+      // the zoomed-out fitBounds view.
+      map.setView(toLatLng(mapObj, r.x, r.y), 1.5, { animate: false });
+      setTimeout(() => marker.openPopup(), 80);
     }
   }
 }
