@@ -678,9 +678,12 @@ function sitePopupHtml(mapObj, parkId, r, meta, siteNights) {
     ? `<a class="book-link" target="_blank" rel="noopener" href="${bookingUrl({ parkId, mapId: mapObj.mapId, criteria: c })}">Book on Ontario Parks ↗</a>`
     : '';
   const park = parkId != null ? state.parksById.get(parkId) : null;
+  // Material "directions" glyph, the same icon Google Maps uses (Apache 2.0)
   const directions = park
-    ? `<a class="dir-link" target="_blank" rel="noopener" title="driving directions to ${esc(park.name)}"
-         href="${directionsUrl(park)}">🧭 Directions</a>`
+    ? `<a class="dir-link" target="_blank" rel="noopener" title="Directions to ${esc(park.name)}"
+         aria-label="Directions to ${esc(park.name)}" href="${directionsUrl(park)}">
+         <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="#1A73E8" d="M21.71 11.29l-9-9c-.39-.39-1.02-.39-1.41 0l-9 9c-.39.39-.39 1.02 0 1.41l9 9c.39.39 1.02.39 1.41 0l9-9c.39-.39.39-1.02 0-1.41zM14 14.5V12h-4v3H8v-4c0-.55.45-1 1-1h5V7.5l3.5 3.5-3.5 3.5z"/></svg>
+       </a>`
     : '';
 
   return `<div class="popup">

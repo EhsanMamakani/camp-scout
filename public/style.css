@@ -674,7 +674,7 @@ input:focus-visible, select:focus-visible, button:focus-visible {
   margin-bottom: 4px;
 }
 
-.book-link, .dir-link {
+.book-link {
   flex: 1;
   display: block;
   text-align: center;
@@ -683,23 +683,26 @@ input:focus-visible, select:focus-visible, button:focus-visible {
   font-weight: 700;
   text-decoration: none;
   white-space: nowrap;
-}
-.book-link {
   background: var(--marigold);
   color: var(--pine-950);
   box-shadow: 0 2px 0 var(--marigold-deep);
 }
 .book-link:hover { filter: brightness(1.05); }
+
+/* icon-only directions button (Google Maps directions glyph) */
 .dir-link {
   flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
   border: 1.5px solid var(--pine-700);
+  border-radius: 7px;
   background: var(--paper);
-  color: var(--pine-800);
   box-shadow: 0 2px 0 var(--paper-edge);
 }
-.dir-link:hover { background: var(--marigold); }
-/* without dates there is no booking button; let directions take the row */
-.popup-actions .dir-link:only-child { flex: 1; }
+.dir-link:hover { background: #e8f0fe; border-color: #1A73E8; }
+.dir-link svg { display: block; }
 .popup-note { font-size: 11.5px; color: var(--slate); margin: 6px 0 0; }
 
 /* legend + loading */
