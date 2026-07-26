@@ -402,13 +402,10 @@ input:focus-visible, select:focus-visible, button:focus-visible {
 .legend-icon { pointer-events: none; }
 
 .legend-tile {
-  position: relative;
-  display: inline-flex;
+  display: block;
   flex: 0 0 auto;
   filter: drop-shadow(0 1px 1px rgba(15, 32, 24, 0.35));
 }
-.legend-tile .site-shape { position: absolute; inset: 0; filter: none; }
-.legend-tile img { position: absolute; inset: 0; }
 
 /* popup */
 

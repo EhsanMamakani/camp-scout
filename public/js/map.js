@@ -68,10 +68,19 @@ function shapeSvg(iconType, cls, size = 18, fill = null) {
 }
 
 // Composite amenity marker exactly like the official map: a coloured tile
-// shape (usually a blue rounded square) with a white glyph PNG on top.
+// shape (usually a rounded square) with a white glyph PNG on top. Tile and
+// glyph live in ONE svg so the glyph is guaranteed to paint over the tile
+// (svg paints in document order; separate absolutely-positioned elements
+// proved unreliable inside Leaflet's transformed marker pane).
 function legendTileHtml(l, icon, size = 18) {
-  const tile = shapeSvg(l.shape ?? 17, 'tile-shape', size, `rgb(${(l.rgb || [16, 125, 192]).join(',')})`);
-  return `<span class="legend-tile" style="width:${size}px;height:${size}px">${tile}<img src="${icon.dataUri}" width="${size}" height="${size}" alt="${esc(icon.label)}" title="${esc(icon.label)}"></span>`;
+  const s = SHAPES[l.shape ?? 17] ?? SHAPES[17];
+  const fill = `rgb(${(l.rgb || [16, 125, 192]).join(',')})`;
+  const tile = s.rect
+    ? `<rect fill="${fill}" x="${s.rect.x}" y="${s.rect.y}" width="${s.rect.w}" height="${s.rect.h}" rx="${s.rect.rx}" ry="${s.rect.rx}" stroke-linejoin="round"/>`
+    : `<path fill="${fill}" d="${s.d}"/>`;
+  return `<svg class="legend-tile" viewBox="0 0 ${s.w} ${s.h}" width="${size}" height="${size}" role="img" aria-label="${esc(icon.label)}">`
+    + `<title>${esc(icon.label)}</title>${tile}`
+    + `<image href="${icon.dataUri}" x="0" y="0" width="${s.w}" height="${s.h}" preserveAspectRatio="xMidYMid meet"/></svg>`;
 }
 
 const $ = (sel) => document.querySelector(sel);
