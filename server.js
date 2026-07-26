@@ -128,6 +128,16 @@ function parseGps(s) {
 
 function trimPark(p) {
   const v = en(p.localizedValues);
+  // physical address (the ontarioparks.ca "Physical Address"), present for
+  // 125 of 127 parks; regionCode holds the postal code
+  const street = (v.streetAddress || '').trim();
+  const city = (v.city || '').trim();
+  const postal = /^[A-Za-z]\d[A-Za-z]\s?\d[A-Za-z]\d$/.test((p.regionCode || '').trim())
+    ? p.regionCode.trim().toUpperCase()
+    : '';
+  const address = street && city
+    ? `${street}, ${city}, ON${postal ? ' ' + postal : ''}`
+    : null;
   return {
     parkId: p.resourceLocationId,
     rootMapId: p.rootMapId,
@@ -138,6 +148,7 @@ function trimPark(p) {
     photo: p.photos?.[0]?.photoUrlResult?.url || null,
     gps: parseGps(p.gpsCoordinates),
     drivingDirections: v.drivingDirections || '',
+    address,
   };
 }
 

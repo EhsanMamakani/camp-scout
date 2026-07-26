@@ -37,11 +37,12 @@ export function fetchSiteCalendar(resourceId, startDate, endDate) {
 }
 
 // Directions to the park (Google Maps deep link; opens the Maps app on
-// phones). The park's place name is the one destination every park has
-// (coordinates exist for only 4 of 127), so it is used for all of them.
+// phones). Destination is the park's physical street address, which the
+// reservation API carries for 125 of 127 parks; the two without one
+// (Springwater, Temagami cluster) fall back to the park's place name.
 export function directionsUrl(park) {
-  return 'https://www.google.com/maps/dir/?api=1&destination='
-    + encodeURIComponent(`${park.name}, Ontario, Canada`);
+  const destination = park.address || `${park.name}, Ontario, Canada`;
+  return 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(destination);
 }
 
 // Deep link into the real booking flow, pre-filled with the user's criteria.
