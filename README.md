@@ -64,6 +64,13 @@ cheap pre-filter to skip fully-booked parks.
 - Amenity display names live in the locale bundle at
   `/assets/locales/map-view.component.en-CA.json` under `ICON`.
 
+## Contributing
+
+The `main` branch is protected and deploys straight to the live site, so
+direct commits are closed. The usual flow applies: fork the repo, make your
+changes on a branch, and open a pull request. PRs need an approving review
+before they can merge.
+
 ## CLI snapshot
 
 With the server running:
