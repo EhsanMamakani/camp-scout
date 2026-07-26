@@ -394,9 +394,8 @@ async function drawSites(mapObj, parkId, focusResourceId, seq) {
     }
 
     if (focusResourceId === r.resourceId) {
-      // Jump without animation: an animated setView can be cancelled by the
-      // popup's keepInView autopan mid-flight, randomly leaving the map at
-      // the zoomed-out fitBounds view.
+      // The view was already set in renderMap; re-assert in case anything
+      // moved the map while site data was being fetched, then open details.
       map.setView(toLatLng(mapObj, r.x, r.y), 1.5, { animate: false });
       setTimeout(() => marker.openPopup(), 80);
     }
@@ -673,7 +672,19 @@ async function renderMap(mapObj, { parkId = null, focusResourceId = null } = {})
     const bounds = [[0, 0], [mapObj.h, mapObj.w]];
     if (mapObj.imageUrl) add(L.imageOverlay(imgUrl(mapObj.imageUrl), bounds));
     map.setMaxBounds([[-150, -150], [mapObj.h + 150, mapObj.w + 150]]);
-    map.fitBounds(bounds);
+    // Never start an animated zoom here: Leaflet zoom transitions re-assert
+    // their target when they finish, so a later jump to a focused site would
+    // be overwritten whenever the previous view differed (which made focus
+    // zoom fail on alternating taps). When focusing, skip the full-map fit
+    // entirely and go straight to the site.
+    const focus = focusResourceId != null
+      ? mapObj.resources.find((r) => r.resourceId === focusResourceId)
+      : null;
+    if (focus) {
+      map.setView(toLatLng(mapObj, focus.x, focus.y), 1.5, { animate: false });
+    } else {
+      map.fitBounds(bounds, { animate: false });
+    }
 
     drawTextLabels(mapObj);
     drawLinks(mapObj);
