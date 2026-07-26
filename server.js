@@ -126,53 +126,140 @@ function parseGps(s) {
   return { lat, lng };
 }
 
-// Navigation destinations for parks whose street field is descriptive
-// ("35 km west of White River on Hwy. 17") or a PO box, neither of which
-// Google Maps can route to. Coordinates were resolved once against
-// OpenStreetMap (park/campground/access-point features) and sanity-checked
-// by district; two entries use Google place names instead where no OSM
-// feature exists.
-const NAV_OVERRIDES = {
-  '-2147483599': '46.089017,-78.876262', // Algonquin - Kiosk Campground
-  '-2147483596': '45.578941,-78.503122', // Algonquin - Lake Of Two Rivers Campground
+// Verified navigation coordinate for every park (one-time audit,
+// 2026-07-26). Each entry was resolved from Google Maps' own place pin
+// cross-checked against OpenStreetMap park/campground features; where the
+// two disagreed or Google lacked the POI (several in-park campgrounds fall
+// back to a generic park pin), the OSM feature or a manual adjudication
+// won. Parks do not move; if one ever does, update its line here.
+const PARK_NAV = {
+  '-2147483648': '49.757902,-92.653261', // Aaron Provincial Park
+  '-2147483647': '45.867367,-77.757120', // Algonquin - Achray Campground / Sand Lake Gate
+  '-2147483441': '45.729653,-77.789963', // Algonquin - Basin Lake
+  '-2147483631': '46.032364,-78.474994', // Algonquin - Brent Campground
+  '-2147483627': '45.562750,-78.594523', // Algonquin - Canisbay Lake Campground
+  '-2147483470': '45.583949,-78.359320', // Algonquin - Hwy 60 Corridor
+  '-2147483471': '45.196172,-78.224196', // Algonquin - Kingscote
+  '-2147483599': '46.089100,-78.876244', // Algonquin - Kiosk Campground
+  '-2147483596': '45.579202,-78.502247', // Algonquin - Lake Of Two Rivers Campground
+  '-2147483585': '45.575666,-78.515624', // Algonquin - Mew Lake Campground
+  '-2147483567': '45.571046,-78.445686', // Algonquin - Pog Lake and Kearney Lake Campground
   '-2147483555': '45.545718,-78.390863', // Algonquin - Rock Lake and Raccoon Lake
-  '-2147483605': '48.392645,-89.624232', // Kakabeka Falls Provincial Park
-  '-2147483646': '47.564027,-84.711916', // Lake Superior Provincial Park
-  '-2147483581': '46.602273,-82.665804', // Mississagi Provincial Park
-  '-2147483560': '48.844017,-87.392122', // Rainbow Falls Provincial Park
-  '-2147483538': '48.435715,-88.799442', // Sleeping Giant Provincial Park
-  '-2147483617': '48.319713,-79.878149', // Esker Lakes Provincial Park
-  '-2147483562': 'Dawson Trail Campground, Quetico Provincial Park, ON', // Quetico
-  '-2147483536': '46.726504,-81.748616', // Spanish River & Biscotasi Lake
-  '-2147483627': '45.56275,-78.594523', // Algonquin - Canisbay Lake Campground
+  '-2147483514': '45.649282,-78.097526', // Algonquin - Shall Lake
   '-2147483533': '45.512211,-78.721613', // Algonquin - Tea Lake Campground
+  '-2147483591': '45.653759,-79.159636', // Algonquin - Tim River
   '-2147483525': '45.563102,-78.442609', // Algonquin - Whitefish Lake Campground
-  '-2147483567': '45.571046,-78.445686', // Algonquin - Pog Lake and Kearney Lake
-  '-2147483585': '45.575548,-78.517236', // Algonquin - Mew Lake Campground
-  '-2147483645': 'Algonquin Provincial Park East Gate, ON-60, Whitney, ON', // Algonquin East Gate
-  '-2147483642': '48.175947,-90.227973', // Arrow Lake Provincial Park
-  '-2147483644': '45.657136,-78.499539', // Algonquin Backcountry
-  '-2147483610': '49.811291,-83.904438', // Fushimi Lake Provincial Park
-  '-2147483608': '46.904733,-81.664917', // Halfway Lake Provincial Park
-  '-2147483521': '49.687505,-86.897694', // MacLeod Provincial Park
-  '-2147483579': '49.572864,-84.814727', // Nagagamisis Provincial Park
-  '-2147483578': '48.756062,-86.576142', // Neys Provincial Park
-  '-2147483558': '49.447777,-82.130411', // Rene Brunelle Provincial Park
-  '-2147483548': '49.466077,-91.552246', // Sandbar Lake Provincial Park
-  '-2147483528': '47.477226,-82.823188', // Wakami Lake Provincial Park
-  '-2147483526': '48.697303,-85.668813', // White Lake Provincial Park
-  '-2147483542': '48.676429,-89.600298', // Silver Falls Provincial Park
-  '-2147483524': '46.620559,-81.450136', // Windy Lake Provincial Park
-  '-2147483441': '45.729653,-77.789963', // Algonquin - Basin Lake (access point 19)
-  '-2147483470': '45.583618,-78.35959', // Algonquin - Hwy 60 Corridor (Visitor Centre)
-  '-2147483471': '45.094128,-78.138565', // Algonquin - Kingscote (Elephant Lake Rd)
-  '-2147483514': '45.534145,-78.012113', // Algonquin - Shall Lake (Major Lake Rd)
-  '-2147483591': '45.653759,-79.159636', // Algonquin - Tim River (Forestry Tower Rd)
-  '-2147483452': '48.766486,-88.670826', // Ouimet Canyon (their own published lat/lng)
-  '-2147483460': '44.50007,-80.046079', // Wasaga Beach - Beach Area 3
-  '-2147483459': '44.493784,-80.053622', // Wasaga Beach - Beach Area 4
-  '-2147483458': '44.487978,-80.061939', // Wasaga Beach - Beach Area 5
-  '-2147483457': '44.476663,-80.082636', // Wasaga Beach - Beach Area 6
+  '-2147483644': '45.837159,-78.379124', // Algonquin Backcountry
+  '-2147483645': '45.537156,-78.264789', // Algonquin East Gate
+  '-2147483642': '48.169988,-90.235891', // Arrow Lake Provincial Park
+  '-2147483641': '45.391553,-79.214678', // Arrowhead Provincial Park
+  '-2147483639': '44.842954,-80.008686', // Awenda Provincial Park
+  '-2147483638': '44.625644,-78.864724', // Balsam Lake Provincial Park
+  '-2147483637': '44.602398,-79.485425', // Bass Lake Provincial Park
+  '-2147483469': '46.940930,-84.548781', // Batchawana Bay Provincial Park
+  '-2147483635': '49.903413,-93.472693', // Blue Lake Provincial Park
+  '-2147483634': '44.897540,-77.208669', // Bon Echo Provincial Park
+  '-2147483633': '45.657587,-77.580024', // Bonnechere Provincial Park
+  '-2147483630': '43.417784,-79.764705', // Bronte Creek Provincial Park - Campground Area
+  '-2147483440': '43.406355,-79.771315', // Bronte Creek Provincial Park - Day Use Area
+  '-2147483628': '49.063362,-93.913793', // Caliper Lake Provincial Park
+  '-2147483625': '44.497085,-76.043704', // Charleston Lake Provincial Park
+  '-2147483624': '46.218155,-82.077219', // Chutes Provincial Park
+  '-2147483623': '44.536419,-80.349221', // Craigleith Provincial Park
+  '-2147483622': '43.872554,-78.778789', // Darlington Provincial Park
+  '-2147483620': '46.189734,-77.842193', // Driftwood Provincial Park
+  '-2147483619': '44.150228,-79.896228', // Earl Rowe Provincial Park
+  '-2147483618': '44.340240,-78.535805', // Emily Provincial Park
+  '-2147483617': '48.267676,-79.875663', // Esker Lakes Provincial Park
+  '-2147483616': '46.472179,-81.439569', // Fairbank Provincial Park
+  '-2147483615': '44.291346,-77.793852', // Ferris Provincial Park
+  '-2147483614': '47.054916,-79.799550', // Finlayson Point Provincial Park
+  '-2147483613': '45.481943,-76.213699', // Fitzroy Provincial Park
+  '-2147483473': '43.823894,-80.004153', // Forks of the Credit Provincial Park
+  '-2147483612': '46.017141,-80.585575', // French River Provincial Park
+  '-2147483611': '44.507672,-76.553163', // Frontenac Provincial Park
+  '-2147483610': '49.837879,-83.923116', // Fushimi Lake Provincial Park
+  '-2147483609': '45.939796,-80.574764', // Grundy Lake Provincial Park
+  '-2147483608': '46.907524,-81.632587', // Halfway Lake Provincial Park
+  '-2147483607': '44.299733,-81.588087', // Inverhuron Provincial Park
+  '-2147483606': '48.174030,-82.501861', // Ivanhoe Lake Provincial Park
+  '-2147483605': '48.403256,-89.623953', // Kakabeka Falls Provincial Park
+  '-2147483604': '47.800671,-79.880346', // Kap-Kig-Iwan Provincial Park
+  '-2147483603': '44.745952,-78.220080', // Kawartha Highlands Provincial Park
+  '-2147483602': '48.572323,-80.891920', // Kettle Lakes Provincial Park
+  '-2147483601': '46.013046,-81.401749', // Killarney Provincial Park
+  '-2147483600': '45.359080,-80.213689', // Killbear Provincial Park
+  '-2147483468': '42.953032,-81.384012', // Komoka Provincial Park
+  '-2147483443': '44.039873,-77.056040', // Lake on the Mountain Provincial Park
+  '-2147483595': '45.319834,-78.023447', // Lake St. Peter Provincial Park
+  '-2147483646': '47.723041,-84.812247', // Lake Superior Provincial Park
+  '-2147483593': '42.581431,-80.390765', // Long Point Provincial Park
+  '-2147483592': '44.413911,-81.455266', // MacGregor Point Provincial Park
+  '-2147483521': '49.689227,-86.896185', // MacLeod Provincial Park
+  '-2147483589': '44.587560,-79.359051', // Mara Provincial Park
+  '-2147483465': '44.297626,-78.270053', // Mark S. Burnham Provincial Park
+  '-2147483588': '46.733113,-79.802746', // Marten River Provincial Park
+  '-2147483586': '44.569920,-79.330578', // McRae Point Provincial Park
+  '-2147483584': '45.821388,-79.512957', // Mikisew Provincial Park
+  '-2147483466': '45.792184,-82.735493', // Misery Bay Provincial Park
+  '-2147483583': '48.404517,-83.522232', // Missinaibi Provincial Park (Lake)
+  '-2147483582': '48.404517,-83.522232', // Missinaibi Provincial Park (River)
+  '-2147483581': '46.600673,-82.682865', // Mississagi Provincial Park
+  '-2147483472': '44.046141,-80.061766', // Mono Cliffs Provincial Park
+  '-2147483580': '44.781864,-76.237472', // Murphys Point Provincial Park
+  '-2147483579': '49.513580,-84.807069', // Nagagamisis Provincial Park
+  '-2147483578': '48.776245,-86.585049', // Neys Provincial Park
+  '-2147483577': '43.957751,-77.525797', // North Beach Provincial Park
+  '-2147483576': '45.311353,-79.964301', // Oastler Lake Provincial Park
+  '-2147483573': '49.983640,-92.142390', // Ojibway Provincial Park
+  '-2147483452': '48.789514,-88.671295', // Ouimet Canyon Provincial Park
+  '-2147483467': '45.390671,-78.907983', // Oxtongue River - Ragged Falls Provincial Park
+  '-2147483570': '50.784454,-93.445709', // Pakwash Provincial Park
+  '-2147483569': '46.967858,-84.678995', // Pancake Bay Provincial Park
+  '-2147483520': '44.619234,-78.044221', // Petroglyphs Provincial Park
+  '-2147483568': '43.248194,-81.822221', // Pinery Provincial Park
+  '-2147483566': '43.801355,-81.700959', // Point Farms Provincial Park
+  '-2147483565': '42.647549,-80.813205', // Port Burwell Provincial Park
+  '-2147483563': '44.009912,-77.742561', // Presqu'ile Provincial Park
+  '-2147483562': '48.673781,-91.123013', // Quetico Provincial Park
+  '-2147483560': '48.843837,-87.395938', // Rainbow Falls Provincial Park
+  '-2147483558': '49.417469,-82.139325', // Rene Brunelle Provincial Park
+  '-2147483557': '46.073285,-79.783137', // Restoule Provincial Park
+  '-2147483556': '45.059889,-75.671316', // Rideau River Provincial Park
+  '-2147483554': '42.849149,-79.551914', // Rock Point Provincial Park
+  '-2147483553': '42.317360,-81.847097', // Rondeau Provincial Park
+  '-2147483552': '49.681730,-94.235483', // Rushing River Provincial Park
+  '-2147483551': '46.283901,-78.854405', // Samuel de Champlain Provincial Park
+  '-2147483549': '43.907027,-77.239223', // Sandbanks Provincial Park
+  '-2147483548': '49.464603,-91.553049', // Sandbar Lake Provincial Park
+  '-2147483547': '44.674063,-81.256783', // Sauble Falls Provincial Park
+  '-2147483546': '42.818620,-79.957094', // Selkirk Provincial Park
+  '-2147483545': '44.776612,-76.723891', // Sharbot Lake Provincial Park
+  '-2147483544': '44.321956,-79.325453', // Sibbald Point Provincial Park
+  '-2147483543': '44.923196,-78.071213', // Silent Lake Provincial Park
+  '-2147483542': '48.688431,-89.627038', // Silver Falls Provincial Park
+  '-2147483541': '44.832033,-76.576468', // Silver Lake Provincial Park
+  '-2147483540': '49.426416,-94.047737', // Sioux Narrows Provincial Park
+  '-2147483539': '44.888210,-79.752054', // Six Mile Lake Provincial Park
+  '-2147483538': '48.369305,-88.804575', // Sleeping Giant Provincial Park
+  '-2147483536': '46.701028,-81.728861', // Spanish River & Biscotasi Lake Provincial Parks
+  '-2147483519': '44.444272,-79.758991', // Springwater Provincial Park
+  '-2147483535': '45.624733,-80.414512', // Sturgeon Bay Provincial Park
+  '-2147483532': '47.063373,-79.789567', // Temagami (Lady Evelyn-Smoothwater, Obabika River, Sturgeon R
+  '-2147483587': '45.264122,-80.008265', // The Massasauga Provincial Park
+  '-2147483515': '51.262797,-80.624154', // Tidewater Provincial Park
+  '-2147483531': '42.704551,-80.334486', // Turkey Point Provincial Park
+  '-2147483530': '45.558310,-74.451892', // Voyageur Provincial Park
+  '-2147483529': '50.757886,-89.536902', // Wabakimi Provincial Park
+  '-2147483528': '47.534689,-82.866437', // Wakami Lake Provincial Park
+  '-2147483460': '44.498116,-80.047124', // Wasaga Beach Provincial Park - Beach Area 3
+  '-2147483459': '44.495229,-80.053305', // Wasaga Beach Provincial Park - Beach Area 4
+  '-2147483458': '44.567347,-79.909746', // Wasaga Beach Provincial Park - Beach Area 5
+  '-2147483457': '44.476426,-80.082766', // Wasaga Beach Provincial Park - Beach Area 6
+  '-2147483527': '42.087022,-82.447793', // Wheatley Provincial Park
+  '-2147483526': '48.724355,-85.644418', // White Lake Provincial Park
+  '-2147483524': '46.619148,-81.446128', // Windy Lake Provincial Park
+  '-2147483523': '51.079007,-94.850766', // Woodland Caribou Provincial Park
 };
 
 function trimPark(p) {
@@ -199,7 +286,7 @@ function trimPark(p) {
     drivingDirections: v.drivingDirections || '',
     address,
     // what navigation apps should target: curated override, else the address
-    nav: NAV_OVERRIDES[p.resourceLocationId] || address,
+    nav: PARK_NAV[p.resourceLocationId] || address,
   };
 }
 
