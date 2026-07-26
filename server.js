@@ -277,6 +277,7 @@ function trimPark(p) {
   return {
     parkId: p.resourceLocationId,
     rootMapId: p.rootMapId,
+    transactionLocationId: p.transactionLocationId ?? null,
     name: v.fullName || v.shortName || String(p.resourceLocationId),
     description: v.description || '',
     website: v.website || '',

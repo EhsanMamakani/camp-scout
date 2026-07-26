@@ -674,10 +674,10 @@ function sitePopupHtml(mapObj, parkId, r, meta, siteNights) {
 
   const photo = photoGalleryHtml(meta);
 
-  const book = c && parkId != null
-    ? `<a class="book-link" target="_blank" rel="noopener" href="${bookingUrl({ parkId, mapId: mapObj.mapId, criteria: c })}">Book on Ontario Parks ↗</a>`
-    : '';
   const park = parkId != null ? state.parksById.get(parkId) : null;
+  const book = c && park
+    ? `<a class="book-link" target="_blank" rel="noopener" href="${bookingUrl({ park, mapId: mapObj.mapId, criteria: c })}">Book on Ontario Parks ↗</a>`
+    : '';
   // Material "directions" glyph, the same icon Google Maps uses (Apache 2.0)
   const directions = park
     ? `<a class="dir-link" target="_blank" rel="noopener" title="Directions to ${esc(park.name)}"

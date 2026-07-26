@@ -45,20 +45,25 @@ export function directionsUrl(park) {
 }
 
 // Deep link into the real booking flow, pre-filled with the user's criteria.
-export function bookingUrl({ parkId, mapId, criteria }) {
+// Party size must travel in their compact array format
+// ([[capacityCategoryId, subCapacityCategoryId, count, isAdult]]); a plain
+// partySize param is ignored and the page demands a party size.
+export function bookingUrl({ park, mapId, criteria }) {
   const q = new URLSearchParams({
     mapId,
     searchTabGroupId: 0,
     bookingCategoryId: 0,
-    resourceLocationId: parkId,
+    resourceLocationId: park.parkId,
     equipmentId: -32768,
     subEquipmentId: criteria.subEquipmentId,
     startDate: criteria.startDate,
     endDate: criteria.endDate,
     nights: criteria.nights,
     isReserving: true,
-    partySize: criteria.partySize,
+    peopleCapacityCategoryCounts: JSON.stringify([[-32768, null, criteria.partySize, null]]),
+    view: 'map',
   });
+  if (park.transactionLocationId != null) q.set('transactionLocationId', park.transactionLocationId);
   return 'https://reservations.ontarioparks.ca/create-booking/results?' + q;
 }
 
