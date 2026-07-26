@@ -126,6 +126,55 @@ function parseGps(s) {
   return { lat, lng };
 }
 
+// Navigation destinations for parks whose street field is descriptive
+// ("35 km west of White River on Hwy. 17") or a PO box, neither of which
+// Google Maps can route to. Coordinates were resolved once against
+// OpenStreetMap (park/campground/access-point features) and sanity-checked
+// by district; two entries use Google place names instead where no OSM
+// feature exists.
+const NAV_OVERRIDES = {
+  '-2147483599': '46.089017,-78.876262', // Algonquin - Kiosk Campground
+  '-2147483596': '45.578941,-78.503122', // Algonquin - Lake Of Two Rivers Campground
+  '-2147483555': '45.545718,-78.390863', // Algonquin - Rock Lake and Raccoon Lake
+  '-2147483605': '48.392645,-89.624232', // Kakabeka Falls Provincial Park
+  '-2147483646': '47.564027,-84.711916', // Lake Superior Provincial Park
+  '-2147483581': '46.602273,-82.665804', // Mississagi Provincial Park
+  '-2147483560': '48.844017,-87.392122', // Rainbow Falls Provincial Park
+  '-2147483538': '48.435715,-88.799442', // Sleeping Giant Provincial Park
+  '-2147483617': '48.319713,-79.878149', // Esker Lakes Provincial Park
+  '-2147483562': 'Dawson Trail Campground, Quetico Provincial Park, ON', // Quetico
+  '-2147483536': '46.726504,-81.748616', // Spanish River & Biscotasi Lake
+  '-2147483627': '45.56275,-78.594523', // Algonquin - Canisbay Lake Campground
+  '-2147483533': '45.512211,-78.721613', // Algonquin - Tea Lake Campground
+  '-2147483525': '45.563102,-78.442609', // Algonquin - Whitefish Lake Campground
+  '-2147483567': '45.571046,-78.445686', // Algonquin - Pog Lake and Kearney Lake
+  '-2147483585': '45.575548,-78.517236', // Algonquin - Mew Lake Campground
+  '-2147483645': 'Algonquin Provincial Park East Gate, ON-60, Whitney, ON', // Algonquin East Gate
+  '-2147483642': '48.175947,-90.227973', // Arrow Lake Provincial Park
+  '-2147483644': '45.657136,-78.499539', // Algonquin Backcountry
+  '-2147483610': '49.811291,-83.904438', // Fushimi Lake Provincial Park
+  '-2147483608': '46.904733,-81.664917', // Halfway Lake Provincial Park
+  '-2147483521': '49.687505,-86.897694', // MacLeod Provincial Park
+  '-2147483579': '49.572864,-84.814727', // Nagagamisis Provincial Park
+  '-2147483578': '48.756062,-86.576142', // Neys Provincial Park
+  '-2147483558': '49.447777,-82.130411', // Rene Brunelle Provincial Park
+  '-2147483548': '49.466077,-91.552246', // Sandbar Lake Provincial Park
+  '-2147483528': '47.477226,-82.823188', // Wakami Lake Provincial Park
+  '-2147483526': '48.697303,-85.668813', // White Lake Provincial Park
+  '-2147483542': '48.676429,-89.600298', // Silver Falls Provincial Park
+  '-2147483524': '46.620559,-81.450136', // Windy Lake Provincial Park
+  '-2147483441': '45.729653,-77.789963', // Algonquin - Basin Lake (access point 19)
+  '-2147483470': '45.583618,-78.35959', // Algonquin - Hwy 60 Corridor (Visitor Centre)
+  '-2147483471': '45.094128,-78.138565', // Algonquin - Kingscote (Elephant Lake Rd)
+  '-2147483514': '45.534145,-78.012113', // Algonquin - Shall Lake (Major Lake Rd)
+  '-2147483591': '45.653759,-79.159636', // Algonquin - Tim River (Forestry Tower Rd)
+  '-2147483452': '48.766486,-88.670826', // Ouimet Canyon (their own published lat/lng)
+  '-2147483460': '44.50007,-80.046079', // Wasaga Beach - Beach Area 3
+  '-2147483459': '44.493784,-80.053622', // Wasaga Beach - Beach Area 4
+  '-2147483458': '44.487978,-80.061939', // Wasaga Beach - Beach Area 5
+  '-2147483457': '44.476663,-80.082636', // Wasaga Beach - Beach Area 6
+};
+
 function trimPark(p) {
   const v = en(p.localizedValues);
   // physical address (the ontarioparks.ca "Physical Address"), present for
@@ -149,6 +198,8 @@ function trimPark(p) {
     gps: parseGps(p.gpsCoordinates),
     drivingDirections: v.drivingDirections || '',
     address,
+    // what navigation apps should target: curated override, else the address
+    nav: NAV_OVERRIDES[p.resourceLocationId] || address,
   };
 }
 
