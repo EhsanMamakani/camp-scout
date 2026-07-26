@@ -429,6 +429,37 @@ input:focus-visible, select:focus-visible, button:focus-visible {
   scrollbar-color: var(--paper-edge) transparent;
 }
 
+/* "more below" cue: fade + chevron while the popup can scroll further */
+.leaflet-popup-content-wrapper { position: relative; }
+.leaflet-popup-content-wrapper::after {
+  content: '⌄';
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  bottom: 2px;
+  height: 42px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--pine-800);
+  background: linear-gradient(to bottom, rgba(245, 239, 224, 0), var(--cream) 72%);
+  border-radius: 0 0 8px 8px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.leaflet-popup-content-wrapper.has-more::after { opacity: 1; }
+@media (prefers-reduced-motion: no-preference) {
+  .leaflet-popup-content-wrapper.has-more::after { animation: nudge 1.3s ease-in-out infinite alternate; }
+}
+@keyframes nudge {
+  from { padding-bottom: 6px; }
+  to { padding-bottom: 1px; }
+}
+
 .popup { max-width: 270px; font-size: 13px; }
 .popup h3 {
   font-family: 'Fraunces', serif;

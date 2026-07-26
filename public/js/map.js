@@ -97,9 +97,36 @@ export function initMap() {
     attributionControl: false,
     wheelPxPerZoomLevel: 90,
   });
-  map.on('popupopen', (e) => { openPopup = e.popup; });
+  map.on('popupopen', (e) => {
+    openPopup = e.popup;
+    // photos load after open and change the scroll height
+    setTimeout(updatePopupScrollHint, 50);
+    setTimeout(updatePopupScrollHint, 400);
+  });
   map.on('popupclose', () => { openPopup = null; });
 }
+
+// "More below" affordance: while the popup content can scroll further, show
+// a fade + chevron at its bottom edge (class toggled on the wrapper).
+function updatePopupScrollHint() {
+  const content = document.querySelector('.leaflet-popup-content');
+  const wrapper = document.querySelector('.leaflet-popup-content-wrapper');
+  if (!content || !wrapper) return;
+  const more = content.scrollHeight - content.scrollTop - content.clientHeight > 12;
+  wrapper.classList.toggle('has-more', more);
+}
+
+// scroll events don't bubble; capture them at the document level
+document.addEventListener('scroll', (e) => {
+  if (e.target?.classList?.contains('leaflet-popup-content')) updatePopupScrollHint();
+}, true);
+
+// popup photos finishing their lazy load also change the scroll height
+document.addEventListener('load', (e) => {
+  if (e.target?.tagName === 'IMG' && e.target.closest('.leaflet-popup-content')) {
+    updatePopupScrollHint();
+  }
+}, true);
 
 const showLoading = (on) => { $('#map-loading').hidden = !on; };
 
@@ -555,7 +582,8 @@ function calendarGridHtml(entry) {
 function refreshCalendar(resourceId) {
   const el = document.querySelector(`.site-cal[data-resource-id="${resourceId}"]`);
   if (el) el.innerHTML = calInnerHtml(resourceId);
-  if (openPopup) openPopup.update();
+  if (openPopup) openPopup.update(); // replaces the popup DOM
+  updatePopupScrollHint();
 }
 
 async function openSiteCalendar(resourceId) {
