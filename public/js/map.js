@@ -5,7 +5,7 @@
 
 import { state, criteriaKey } from './state.js';
 import {
-  fetchParkBundle, fetchAvailability, fetchLegendIcons, imgUrl, bookingUrl,
+  fetchParkBundle, fetchAvailability, fetchLegendIcons, fetchSiteCalendar, imgUrl, bookingUrl,
 } from './api.js';
 
 let map;                 // L.map instance
@@ -97,6 +97,8 @@ export function initMap() {
     attributionControl: false,
     wheelPxPerZoomLevel: 90,
   });
+  map.on('popupopen', (e) => { openPopup = e.popup; });
+  map.on('popupclose', () => { openPopup = null; });
 }
 
 const showLoading = (on) => { $('#map-loading').hidden = !on; };
@@ -365,7 +367,11 @@ async function drawSites(mapObj, parkId, focusResourceId, seq) {
       }),
       zIndexOffset: cls === 'avail-free' ? 200 : 0,
     }));
-    marker.bindPopup(() => sitePopupHtml(mapObj, parkId, r, meta, nights?.get(r.resourceId)), { maxWidth: 300 });
+    marker.bindPopup(() => sitePopupHtml(mapObj, parkId, r, meta, nights?.get(r.resourceId)), {
+      maxWidth: 300,
+      maxHeight: 340,
+      keepInView: true,
+    });
 
     // The official map draws the site number beside the shape, at the
     // resource's localizationPoint.
@@ -476,6 +482,117 @@ document.addEventListener('click', (e) => {
   } catch { /* bad data attribute, ignore */ }
 });
 
+// ------------------------------------------------------------- site calendar
+// Mirrors the official "Site calendar": future per-day availability for one
+// site, shown as a month grid inside the popup. Data is fetched once per
+// site (today through +6 months) and paged by month client-side.
+
+const CAL_MONTHS_AHEAD = 6;
+const siteCal = new Map(); // resourceId -> {start, days: bool[]|'loading'|'error', month: 'YYYY-MM'}
+let openPopup = null;      // set on popupopen so we can resize after DOM swaps
+
+const isoDate = (d) => d.toISOString().slice(0, 10);
+const todayIso = () => isoDate(new Date());
+
+// The popup's content is a function that Leaflet re-invokes on update(),
+// so the calendar markup must be derived from siteCal state every time.
+function calInnerHtml(resourceId) {
+  const entry = siteCal.get(resourceId);
+  if (!entry) return '<button type="button" class="site-cal-toggle">📅 Site calendar</button>';
+  if (entry.days === 'loading') return '<p class="popup-note">Loading site calendar…</p>';
+  if (entry.days === 'error') {
+    return '<p class="popup-note">Could not load the site calendar.</p>'
+      + '<button type="button" class="site-cal-toggle">Try again</button>';
+  }
+  return calendarGridHtml(entry);
+}
+
+function calendarShellHtml(resourceId) {
+  return `<div class="site-cal" data-resource-id="${resourceId}">${calInnerHtml(resourceId)}</div>`;
+}
+
+function calendarGridHtml(entry) {
+  const [y, m] = entry.month.split('-').map(Number);
+  const first = new Date(Date.UTC(y, m - 1, 1));
+  const daysInMonth = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  const startMs = Date.parse(entry.start);
+  const monthName = first.toLocaleDateString('en-CA', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+
+  let cells = '';
+  for (let i = 0; i < first.getUTCDay(); i++) cells += '<span class="cal-cell out"></span>';
+  for (let day = 1; day <= daysInMonth; day++) {
+    const idx = Math.round((Date.UTC(y, m - 1, day) - startMs) / 864e5);
+    const known = idx >= 0 && idx < entry.days.length;
+    const cls = !known ? 'out' : entry.days[idx] ? 'ok' : 'no';
+    const label = !known ? 'outside booking window' : entry.days[idx] ? 'available' : 'unavailable';
+    cells += `<span class="cal-cell ${cls}" title="${monthName.split(' ')[0]} ${day}: ${label}">${day}</span>`;
+  }
+
+  const prevOk = entry.month > entry.start.slice(0, 7);
+  const lastIso = isoDate(new Date(startMs + (entry.days.length - 1) * 864e5));
+  const nextOk = entry.month < lastIso.slice(0, 7);
+  return `
+    <div class="cal-head">
+      <button type="button" class="cal-nav cal-prev" ${prevOk ? '' : 'disabled'} aria-label="previous month">‹</button>
+      <span class="cal-month">${monthName}</span>
+      <button type="button" class="cal-nav cal-next" ${nextOk ? '' : 'disabled'} aria-label="next month">›</button>
+    </div>
+    <div class="cal-grid">
+      ${['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d) => `<span class="cal-dow">${d}</span>`).join('')}
+      ${cells}
+    </div>
+    <p class="cal-key"><span class="cal-cell ok"></span> available <span class="cal-cell no"></span> unavailable</p>`;
+}
+
+// Re-query the live container each time: popup.update() replaces the DOM,
+// so any node captured at click time may already be detached.
+function refreshCalendar(resourceId) {
+  const el = document.querySelector(`.site-cal[data-resource-id="${resourceId}"]`);
+  if (el) el.innerHTML = calInnerHtml(resourceId);
+  if (openPopup) openPopup.update();
+}
+
+async function openSiteCalendar(resourceId) {
+  let entry = siteCal.get(resourceId);
+  if (entry && entry.days !== 'error') return;
+  const start = todayIso();
+  const end = new Date();
+  end.setMonth(end.getMonth() + CAL_MONTHS_AHEAD);
+  // default view: the month being searched, if it's inside the window
+  const searchMonth = state.criteria?.startDate?.slice(0, 7);
+  const month = searchMonth && searchMonth >= start.slice(0, 7) && searchMonth <= isoDate(end).slice(0, 7)
+    ? searchMonth
+    : start.slice(0, 7);
+  entry = { start, days: 'loading', month };
+  siteCal.set(resourceId, entry);
+  refreshCalendar(resourceId);
+  try {
+    const res = await fetchSiteCalendar(resourceId, start, isoDate(end));
+    entry.days = res.days;
+  } catch {
+    entry.days = 'error';
+  }
+  refreshCalendar(resourceId);
+}
+
+function shiftCalendarMonth(resourceId, delta) {
+  const entry = siteCal.get(resourceId);
+  if (!entry || !Array.isArray(entry.days)) return;
+  const [y, m] = entry.month.split('-').map(Number);
+  const d = new Date(Date.UTC(y, m - 1 + delta, 1));
+  entry.month = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+  refreshCalendar(resourceId);
+}
+
+document.addEventListener('click', (e) => {
+  const cal = e.target.closest('.site-cal');
+  if (!cal) return;
+  const resourceId = Number(cal.dataset.resourceId);
+  if (e.target.closest('.site-cal-toggle')) openSiteCalendar(resourceId);
+  else if (e.target.closest('.cal-prev')) shiftCalendarMonth(resourceId, -1);
+  else if (e.target.closest('.cal-next')) shiftCalendarMonth(resourceId, 1);
+});
+
 function decodeAttributes(meta) {
   const HIDDEN = new Set([-32718, -32717]); // Northing / Easting: raw UTM, not useful in a popup
   const out = [];
@@ -534,6 +651,7 @@ function sitePopupHtml(mapObj, parkId, r, meta, siteNights) {
     ${nightsHtml}
     ${equipNames.length ? `<p class="popup-note">Fits: ${esc(equipNames.join(', '))}</p>` : ''}
     ${attrHtml}
+    ${calendarShellHtml(r.resourceId)}
     ${book}
   </div>`;
 }

@@ -429,6 +429,25 @@ app.get('/op/availability', asyncRoute(async (req, res) => {
   res.json(await getAvailability(mapId, opts));
 }));
 
+// Per-site future availability, one boolean per day from startDate.
+// Backs the popup's "Site calendar" (same endpoint the official button uses).
+app.get('/op/sitecalendar', asyncRoute(async (req, res) => {
+  const resourceId = parseInt(req.query.resourceId, 10);
+  if (!Number.isFinite(resourceId)) throw new Error('resourceId required');
+  const startDate = String(req.query.startDate || '');
+  const endDate = String(req.query.endDate || '');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate) || !/^\d{4}-\d{2}-\d{2}$/.test(endDate)) {
+    throw new Error('startDate and endDate must be YYYY-MM-DD');
+  }
+  const days = Math.round((Date.parse(endDate) - Date.parse(startDate)) / 864e5);
+  if (!(days >= 1 && days <= 240)) throw new Error('range must be 1-240 days');
+  const key = `sitecal:${resourceId}:${startDate}:${endDate}`;
+  const data = await memCached(key, AVAIL_TTL * 3, () =>
+    upstreamJson(`/api/availability/resourcedailyavailability?resourceId=${resourceId}`
+      + `&startDate=${startDate}&endDate=${endDate}&seed=${new Date().toISOString()}`));
+  res.json({ resourceId, startDate, days: toArray(data).map((d) => d && d.availability === 0) });
+}));
+
 // Image proxy (map PNGs + site photos live behind the same WAF).
 app.get('/op/img', asyncRoute(async (req, res) => {
   const u = String(req.query.u || '');

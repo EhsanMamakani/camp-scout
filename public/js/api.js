@@ -31,6 +31,11 @@ export function fetchAvailability(mapId, criteria) {
 
 export const imgUrl = (upstreamUrl) => '/op/img?u=' + encodeURIComponent(upstreamUrl);
 
+export function fetchSiteCalendar(resourceId, startDate, endDate) {
+  const q = new URLSearchParams({ resourceId, startDate, endDate });
+  return getJSON('/op/sitecalendar?' + q);
+}
+
 // Deep link into the real booking flow, pre-filled with the user's criteria.
 export function bookingUrl({ parkId, mapId, criteria }) {
   const q = new URLSearchParams({
