@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Camp Scout · Ontario Parks availability</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650;9..144,900&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/vendor/leaflet/leaflet.css">
+<link rel="stylesheet" href="/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🏕️</text></svg>">
+</head>
+<body>
+
+<aside id="sidebar">
+  <header class="brand">
+    <div class="brand-mark">🏕️</div>
+    <div>
+      <h1>Camp Scout</h1>
+      <p class="tagline">Ontario Parks · whole-stay availability</p>
+    </div>
+  </header>
+
+  <form id="search-form" autocomplete="off">
+    <div class="field-row">
+      <label class="field">
+        <span class="field-label">Arrive</span>
+        <input type="date" id="start-date" required>
+      </label>
+      <label class="field">
+        <span class="field-label">Depart</span>
+        <input type="date" id="end-date" required>
+      </label>
+    </div>
+    <p class="nights-note" id="nights-note">2 nights</p>
+
+    <label class="field">
+      <span class="field-label">Equipment</span>
+      <select id="equipment"></select>
+    </label>
+
+    <label class="field">
+      <span class="field-label">Party size</span>
+      <div class="stepper">
+        <button type="button" class="step" data-step="-1" aria-label="fewer people">−</button>
+        <input type="number" id="party-size" min="1" max="100" value="1">
+        <button type="button" class="step" data-step="1" aria-label="more people">+</button>
+      </div>
+    </label>
+
+    <button type="submit" id="scan-btn">Scan all parks</button>
+
+    <div id="scan-progress" hidden>
+      <div class="bar"><div class="bar-fill" id="bar-fill"></div></div>
+      <p id="progress-text">Scanning…</p>
+    </div>
+  </form>
+
+  <section id="results">
+    <p class="results-hint">Pick your dates and scan. Every park below is checked for sites
+    free on <em>all</em> of your nights, not just some of them.</p>
+  </section>
+
+  <footer class="side-foot">
+    <p>Unofficial tool. Availability data © Ontario Parks. Book through
+    <a href="https://reservations.ontarioparks.ca" target="_blank" rel="noopener">reservations.ontarioparks.ca</a>.</p>
+  </footer>
+</aside>
+
+<main id="map-area">
+  <nav id="crumbs" aria-label="map navigation"></nav>
+  <div id="map"></div>
+  <div id="map-legend" class="map-legend" hidden></div>
+  <div id="map-loading" class="map-loading" hidden><span class="spin"></span> Loading map…</div>
+</main>
+
+<script src="/vendor/leaflet/leaflet.js"></script>
+<script type="module" src="/js/main.js"></script>
+</body>
+</html>
