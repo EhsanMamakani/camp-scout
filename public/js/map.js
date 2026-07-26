@@ -5,7 +5,7 @@
 
 import { state, criteriaKey } from './state.js';
 import {
-  fetchParkBundle, fetchAvailability, fetchLegendIcons, fetchSiteCalendar, imgUrl, bookingUrl,
+  fetchParkBundle, fetchAvailability, fetchLegendIcons, fetchSiteCalendar, imgUrl, bookingUrl, directionsUrl,
 } from './api.js';
 
 let map;                 // L.map instance
@@ -677,6 +677,11 @@ function sitePopupHtml(mapObj, parkId, r, meta, siteNights) {
   const book = c && parkId != null
     ? `<a class="book-link" target="_blank" rel="noopener" href="${bookingUrl({ parkId, mapId: mapObj.mapId, criteria: c })}">Book on Ontario Parks ↗</a>`
     : '';
+  const park = parkId != null ? state.parksById.get(parkId) : null;
+  const directions = park
+    ? `<a class="dir-link" target="_blank" rel="noopener" title="driving directions to ${esc(park.name)}"
+         href="${directionsUrl(park)}">🧭 Directions</a>`
+    : '';
 
   return `<div class="popup">
     <h3>Site ${esc(meta?.name || r.resourceId)}</h3>
@@ -686,7 +691,7 @@ function sitePopupHtml(mapObj, parkId, r, meta, siteNights) {
     ${equipNames.length ? `<p class="popup-note">Fits: ${esc(equipNames.join(', '))}</p>` : ''}
     ${attrHtml}
     ${calendarShellHtml(r.resourceId)}
-    ${book}
+    <div class="popup-actions">${directions}${book}</div>
   </div>`;
 }
 

@@ -36,6 +36,17 @@ export function fetchSiteCalendar(resourceId, startDate, endDate) {
   return getJSON('/op/sitecalendar?' + q);
 }
 
+// Directions to the park (Google Maps deep link; opens the Maps app on
+// phones). Ontario Parks has per-park coordinates for only a handful of
+// parks and no per-site ones, so the park itself is the destination:
+// use exact coordinates when known, otherwise the park's well-known name.
+export function directionsUrl(park) {
+  const destination = park.gps
+    ? `${park.gps.lat},${park.gps.lng}`
+    : `${park.name}, Ontario, Canada`;
+  return 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(destination);
+}
+
 // Deep link into the real booking flow, pre-filled with the user's criteria.
 export function bookingUrl({ parkId, mapId, criteria }) {
   const q = new URLSearchParams({

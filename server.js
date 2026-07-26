@@ -115,6 +115,17 @@ function memCached(key, ttlMs, loader) {
 
 // ---------------------------------------------------------------- shaping
 
+// gpsCoordinates comes in two formats: "48.17, -90.22" and
+// "Latitude: 49.69, Longitude: -86.90"; only a handful of parks have it.
+function parseGps(s) {
+  const nums = String(s || '').match(/-?\d+\.\d+/g);
+  if (!nums || nums.length < 2) return null;
+  const lat = parseFloat(nums[0]);
+  const lng = parseFloat(nums[1]);
+  if (lat < 41 || lat > 57 || lng < -96 || lng > -73) return null; // not in Ontario
+  return { lat, lng };
+}
+
 function trimPark(p) {
   const v = en(p.localizedValues);
   return {
@@ -125,6 +136,8 @@ function trimPark(p) {
     website: v.website || '',
     phone: p.phoneNumber || '',
     photo: p.photos?.[0]?.photoUrlResult?.url || null,
+    gps: parseGps(p.gpsCoordinates),
+    drivingDirections: v.drivingDirections || '',
   };
 }
 
