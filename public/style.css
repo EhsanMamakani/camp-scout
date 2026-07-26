@@ -640,6 +640,7 @@ input:focus-visible, select:focus-visible, button:focus-visible {
   display: block;
   text-align: center;
   margin-top: 9px;
+  margin-bottom: 4px;
   padding: 8px;
   border-radius: 7px;
   background: var(--marigold);
