@@ -1,5 +1,7 @@
 # Camp Scout: Ontario Parks availability finder
 
+**Just want to use it? It's live at [camp-scout-2gck.onrender.com](https://camp-scout-2gck.onrender.com/)** (free hosting, so give it up to a minute to wake if it's been idle).
+
 Scan **every Ontario Provincial Park at once** for campsites that are free for
 *all* the nights of your stay, then explore them on the same maps the official
 reservation site uses: park by park, campground by campground, site by site,
